@@ -8,17 +8,9 @@ services:
     image: postgres:14-alpine
     container_name: lago_db
     restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-lago}
-      POSTGRES_USER: ${POSTGRES_USER:-lago}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      PGDATA: /data/postgres
-      PGPORT: ${POSTGRES_PORT:-5432}
-      POSTGRES_SCHEMA: public
+    env_file: ./config/postgres.env
     volumes:
       - lago_postgres_data:/data/postgres
-    ports:
-      - ${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lago"]
       interval: 5s
@@ -29,11 +21,8 @@ services:
     image: redis:6-alpine
     container_name: lago_redis
     restart: unless-stopped
-    command: --port ${REDIS_PORT:-6379}
     volumes:
       - lago_redis_data:/data
-    ports:
-      - ${REDIS_PORT:-6379}:${REDIS_PORT:-6379}
     healthcheck:
       test: ["CMD-SHELL", "redis-cli", "ping"]
       interval: 5s
@@ -44,14 +33,9 @@ services:
     image: quay.io/minio/minio
     container_name: lago_minio
     command: server /data --console-address ":9001"
-    expose:
-      - 9000
-      - 9001
     volumes:
       - lago_storage_data:/data
-    environment:
-      - MINIO_ROOT_USER=lago
-      - MINIOT_ROOT_PASSWORD=changeme
+    env_file: ./config/minio.env
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
